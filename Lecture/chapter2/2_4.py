@@ -217,9 +217,6 @@ check_balance(a)
 # Example: temperature computation-- Celsius & Fahrenheit
 from operator import add, mul, sub, truediv
 
-celsius = connector("Celsius")
-fahrenheit = connector("Fahrenheit")
-
 def convert(c, f):
     '''Connect c to f with constraints to convert from Celsius to Fahrenheit'''
     u, v, w, x, y = [connector() for _ in range(5)]
@@ -298,3 +295,6 @@ def inform_all_except(source, message, constraints):
     for c in constraints:
         if c != source:
             c[message]()
+
+celsius = connector("Celsius")
+fahrenheit = connector("Fahrenheit")
