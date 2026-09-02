@@ -256,6 +256,12 @@ def multiplier(a, b, c):
     '''The constraint that a * b = c'''
     return make_ternary_constraint(a, b, c, mul, truediv, truediv)
 
+def constant(connector, value):
+    '''The constraint that connector = value'''
+    constraint = []
+    connector["set_val"](constraint, value)
+    return constraint
+
 def connector(name=None):
     '''A connector between constraints'''
     informant = None
