@@ -166,7 +166,7 @@ def shuffle(s: list) -> list:
         shuffle.append(second_half[i])
     return shuffle
 
-def deep_map(f, s: list) -> list:
+def deep_map(f, s: list):
     """Replace all non-list elements x with f(x) in the nested list s.
 
     >>> six = [1, 2, [3, [4], 5], 6]
@@ -229,5 +229,13 @@ def count_dollars_upward(sum_needed: int) -> int:
     >>> check(SOURCE_FILE, 'count_dollars_upward', ['While', 'For'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    def helper(amount, min_bill):
+        if amount == sum_needed:
+            return 1
+        elif amount > sum_needed or min_bill is None:
+            return 0
+        else:
+            return (  helper(amount + min_bill, min_bill) 
+                    + helper(amount, next_larger_dollar(min_bill)))
 
+    return helper(0, 1) # starts from zero, not one!
