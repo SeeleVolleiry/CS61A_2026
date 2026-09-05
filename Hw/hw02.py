@@ -24,8 +24,13 @@ def num_eights(num: int) -> int:
     ...       ['Assign', 'AnnAssign', 'AugAssign', 'NamedExpr', 'For', 'While'])
     True
     """
-    "*** YOUR CODE HERE ***"
-
+    if num == 0:
+        return 0
+    else:
+        if num % 10 == 8:
+            return 1 + num_eights(num // 10)
+        else:
+            return num_eights(num // 10)
 
 def digit_distance(num: int) -> int:
     """Determines the digit distance of num.
@@ -46,7 +51,10 @@ def digit_distance(num: int) -> int:
     ...       ['For', 'While'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    if num < 10:
+        return 0
+    else:
+        return digit_distance(num // 10) + abs((num//10)%10 - num%10)
 
 
 def interleaved_sum(num: int, f_odd, f_even) -> int:
@@ -70,10 +78,25 @@ def interleaved_sum(num: int, f_odd, f_even) -> int:
     >>> check(SOURCE_FILE, 'interleaved_sum', ['BitAnd', 'BitOr', 'BitXor']) # ban bitwise operators, don't worry about these if you don't know what they are
     True
     """
-    "*** YOUR CODE HERE ***"
+    def odd_sum(k):
+        if k > num:
+            return 0
+        elif k == 1:
+            return f_odd(1) + even_sum(2)
+        else:
+            return f_odd(k) + even_sum(k + 1)
+
+    def even_sum(k):
+        if k > num:
+            return 0
+        else:
+            return f_even(k) + odd_sum(k + 1)
+        
+    return odd_sum(1)
+        
 
 
-def next_smaller_dollar(bill: int) -> int:
+def next_smaller_dollar(bill: int):
     """Returns the next smaller bill in order."""
     if bill == 100:
         return 50
@@ -85,6 +108,8 @@ def next_smaller_dollar(bill: int) -> int:
         return 5
     elif bill == 5:
         return 1
+    else:
+        return None
 
 def count_dollars(sum_needed: int) -> int:
     """Return the number of ways to make change.
@@ -106,8 +131,17 @@ def count_dollars(sum_needed: int) -> int:
     >>> check(SOURCE_FILE, 'count_dollars', ['While', 'For'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    def helper(amount, max_bill):
+        if amount == 0:
+            return 1
+        if amount < 0 or max_bill is None:
+            return 0
 
+        take_it = helper(amount - max_bill, max_bill) # 用一张当前最大的面额
+        skip_it = helper(amount, next_smaller_dollar(max_bill)) # 放弃当前的面额，使用小一档的面额
+        return take_it + skip_it
+
+    return helper(sum_needed, 100)
 
 def shuffle(s: list) -> list:
     """Return a shuffled list that interleaves the two halves of s.
@@ -123,8 +157,14 @@ def shuffle(s: list) -> list:
     ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
     """
     assert len(s) % 2 == 0, 'len(seq) must be even'
-    "*** YOUR CODE HERE ***"
-
+    length = len(s)
+    first_half = s[0: length // 2]
+    second_half = s[length // 2:]
+    shuffle = []
+    for i in range(length // 2):
+        shuffle.append(first_half[i])
+        shuffle.append(second_half[i])
+    return shuffle
 
 def deep_map(f, s: list) -> list:
     """Replace all non-list elements x with f(x) in the nested list s.
@@ -148,10 +188,15 @@ def deep_map(f, s: list) -> list:
     >>> s3 is s2[1]
     True
     """
-    "*** YOUR CODE HERE ***"
+    for i in range(len(s)):
+        if type(s[i]) == list:
+            deep_map(f, s[i])
+        else:
+            s[i] = f(s[i])
+     # 不需要 return s 这一语句，因为前面已经直接修改了s，不用再返回s了。
 
 
-def next_larger_dollar(bill: int) -> int:
+def next_larger_dollar(bill: int):
     """Returns the next larger bill in order."""
     if bill == 1:
         return 5
