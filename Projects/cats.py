@@ -250,6 +250,22 @@ def furry_fixes(entered: str, source: str, limit: int) -> int:
                 return limit + 1
     return mismatch + len_diff
     '''
+    len_e, len_s = len(entered), len(source)
+    def help_recur(idx_e, idx_s, mismatch): # idx:索引，mismatch:不匹配的字符数/次数
+        # Base Case
+        if mismatch > limit:
+            return limit+1
+        if idx_e > len_e-1:
+            return len_s - len_e
+        if idx_s > len_s-1:
+            return len_e - len_s
+        # Recursive calls
+        if entered[idx_e] == source[idx_s]:
+            return help_recur(idx_e+1, idx_s+1, mismatch)
+        else:
+            return 1 + help_recur(idx_e+1, idx_s+1, mismatch+1)
+
+    return help_recur(0, 0, 0)
     # END PROBLEM 6
 
 
@@ -270,22 +286,27 @@ def minimum_mewtations(entered: str, source: str, limit: int) -> int:
     >>> minimum_mewtations("ckiteus", "kittens", big_limit) # ckiteus -> kiteus -> kitteus -> kittens
     3
     """
-    assert False, 'Remove this line'
-    if ___________: # Base cases should go here, you may add more base cases as needed.
+    # assert False, 'Remove this line' 删除或者注释改行
+    if limit < 0: # Base cases should go here, you may add more base cases as needed.
         # BEGIN
-        "*** YOUR CODE HERE ***"
+        return limit+1
         # END
+    if (not entered) and (not source):
+        return 0
+    elif (not entered) or (not source):
+        return abs(len(entered) - len(source))
     # Recursive cases should go below here
-    if ___________: # Feel free to remove or add additional cases
+    if entered[0] == source[0]: # Feel free to remove or add additional cases
         # BEGIN
-        "*** YOUR CODE HERE ***"
+        return minimum_mewtations(entered[1:], source[1:], limit)
         # END
     else:
-        add = ... # Fill in these lines
-        remove = ...
-        substitute = ...
+        # add后就认为entered[0]等于source[0]了，所以比较entered[0]和source[1:][0]，其余两种操作类似。
+        add = 1 + minimum_mewtations(entered, source[1:], limit-1)
+        remove = 1 + minimum_mewtations(entered[1:], source, limit-1)
+        substitute = 1 + minimum_mewtations(entered[1:], source[1:], limit-1)
         # BEGIN
-        "*** YOUR CODE HERE ***"
+        return min(add, remove, substitute) # 如果不等，每种操作各一次，返回三个中的最小值。
         # END
 
 
