@@ -94,7 +94,11 @@ def count_occurrences(t: Iterator[int], n: int, x: int) -> int:
     >>> count_occurrences(v, 6, 6)
     2
     """
-    "*** YOUR CODE HERE ***"
+    counts = 0
+    for _ in range(n):
+        if next(t) == x:
+            counts += 1
+    return counts
 
 
 def perms(seq):
@@ -119,11 +123,18 @@ def perms(seq):
     >>> sorted(perms("ab"))
     [['a', 'b'], ['b', 'a']]
     """
-    "*** YOUR CODE HERE ***"
+    # Base Case
+    if len(seq) == 1:
+        yield list(seq)
+    # Recursive case/call
+    for i in range(len(seq)):
+        start, rest = seq[i], seq[:i] + seq[i+1:]
+        for perm in perms(rest):
+            yield [start] + perm
 
 
 
-def repeated(t: Iterator[int], k: int) -> int:
+def repeated(t: Iterator[int], k: int): # -> int:
     """Return the first value in iterator t that appears k times in a row,
     calling next on t as few times as possible.
 
@@ -143,5 +154,13 @@ def repeated(t: Iterator[int], k: int) -> int:
     2
     """
     assert k > 1
-    "*** YOUR CODE HERE ***"
+    curr_val, count = next(t), 1
+    for elem in t:
+        if elem == curr_val:
+            count += 1
+            if count == k:
+                return curr_val
+        else:
+            curr_val = elem
+            count = 1
 
