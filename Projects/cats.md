@@ -343,11 +343,130 @@ Important: You should not use any helper functions in your implementation of min
     当他们长度不一样时，到匹配结束，其中一个为空字符串。这时，二者存在长度差。最小的操作数就是增加对应差值数量的字符，即是操作数为长度差的绝对值。返回这一绝对差值即可。
 
 # Phase 3：Multiplayer
-## Problem 8：
+## Problem 8：report_progress
+
+计算单词数的正确率：从第一个元素开始匹配，直到出现第一个不相符的元素。返回计算出的正确率。
+
+Implement report_progress, which is called every time the user finishes typing a word. It takes a list of the words entered so far, a list of the words in the source text, the user's user_id, and an upload function that is used to upload a progress report to the multiplayer server. 
+
+Your progress is a ratio of the words in the source that you have entered correctly, up to the first incorrect word, divided by the number of source words. 
+For instance, this example has a progress of 0.25:
+
+    report_progress(["Hello", "ths", "is"], ["Hello", "this", "is", "wrong"], ...)
+
+*python3 ok -q 08 -u*
+```python
+>>> from cats import report_progress
+>>> print_progress = lambda d: print('ID:', d['id'], 'Progress:', d['progress'])
+>>> entered = ['I', 'have', 'begun']
+>>> source = ['I', 'have', 'begun', 'to', 'type']
+>>> print_progress({'id': 1, 'progress': 0.6})
+ID: 1 Progress: 0.6
+
+>>> report_progress(entered, source, 1, print_progress) # print_progress is called on the report
+(line 1) ID: 1 Progress: 0.6
+(line 2) 0.6
+
+>>> report_progress(['I', 'begun'], source, 2, print_progress)
+(line 1) ID: 2 Progress: 0.2
+(line 2) 0.2
+
+>>> report_progress(['I', 'hve', 'begun', 'to', 'type'], source, 3, print_progress)
+(line 1) ID: 3 Progress: 0.2
+(line 2) 0.2  
+```
 
 
+## Problem 9：time_per_word()
 
-## Problem 9：
+返回一个字典{'words': words_list, 'times': times_list}
 
+Implement time_per_word, which takes in two arguments:
 
-## Problem 10：
+    words: a list of words that players are typing.
+    timestamps_per_player: a list of lists where each inner list contains the timestamps indicating when each player finished typing each word in words.
+
+The function should return a dictionary with the following structure:
+
+    'words': The list of words that the players are typing.
+    'times': A list of lists times that stores the durations it took each player to type each word. Specifically, the value at times[i][j]should indicate how long it took player i to type the word at words[j]. This would be the difference between when the player finished typing words[j] and when the player finished typing words[j-1]. For words[0], this would be the difference between when the player finished typing words[0] and when the player started typing.
+    Timestamps found in the parameter timestamps_per_player are cumulative and always increasing, while the values in times are differences between consecutive timestamps for each player.
+
+Here's an example: If timestamps_per_player = [[1, 3, 5], [2, 5, 6]], then times would be [[2, 2], [3, 1]].
+This is because the first player finished typing each word at timestamps 1, 3, and 5, while the second player finished typing each word at timestamps 2, 5, and 6.
+So the differences in timestamps are (3-1), (5-3) for the first player and (5-2), (6-5) for the second player. The first value of each list within timestamps_per_player represents the initial starting time for each player.
+
+*python3 ok -q 09 -u*
+```python
+>>> from cats import *
+>>> p = [[1, 4, 6, 7], [0, 4, 6, 9]]
+>>> words = ['This', 'is', 'fun']
+>>> words_and_times = time_per_word(words, p)
+>>> words, times = words_and_times['words'], words_and_times['times']
+>>> words
+['This', 'is', 'fun']
+
+>>> times
+[ [3, 2, 1], [4, 2, 3] ]
+
+>>> p = [[0, 2, 3], [2, 4, 7]]
+>>> words, times = words_and_times['words'], words_and_times['times']
+>>> words
+['hello', 'world']
+
+>>> words[1]
+'world'
+
+>>> times
+[ [2, 1], [2, 3] ]
+
+>>>times[0][1]
+1
+```
+
+## Problem 10：fastest_words()
+
+Implement fastest_words, which returns which words each player entered fastest. This function is called once all players have finished typing. *It takes in a dictionary returned by time_per_word.*
+
+*The fastest_words function returns a list of lists of words, one list for each player.* 
+
+    The index of the nested list denotes the player. 
+    The list for each player contains the words they entered faster than all the other players.
+    In the case of a tie, the player with the smallest index is considered to be the one who entered it the fastest.
+
+For example, consider two players who typed Just have fun. Player 0 typed 'fun' the fastest (3 seconds), Player 1 typed 'Just' the fastest (4 seconds), and they tied on the word 'have' (both took 1 second). In this case, Player 0 is considered the fastest for 'have' because their index is smaller.
+
+    player_0 = [5, 1, 3]
+    player_1 = [4, 1, 6]
+    fastest_words({'words': ['Just', 'have', 'fun'], 'times': [player_0, player_1]})
+    [['have', 'fun'], ['Just']]
+
+Use the helper function get_time (provided) to get an individual time from times. It provides helpful error messages when you try to access a time that doesn't exist.
+
+def get_time(times, player_num, word_index):
+    """Return the time it took player_num to type the word at word_index,
+    given a list of lists of times returned by time_per_word."""
+Important: Make sure your implementation does not mutate the given player input lists. For the example above, calling fastest_words on [player_0, player_1] should not mutate player_0 or player_1.
+
+There might not always be two players, so generalize this function in a way that will allow it to handle an indeterminate number of players.
+
+*python3 ok -q 10 -u*
+```python
+>>> from cats import fastest_words, get_time
+>>> p0 = [2, 2, 3]
+>>> p1 = [6, 1, 2]
+>>> get_time([p0, p1], 0, 1)
+2
+
+>>> fastest_words({'words': ['What', 'great', 'luck'], 'times': [p0, p1]})
+[ ['What',], ['great', 'luck'] ]
+
+>>> p0 = [2, 2, 3]
+>>> p1 = [6, 1, 3]
+>>> fastest_words({'words': ['What', 'great', 'luck'], 'times': [p0, p1]})  # with a tie, choose the first player
+[ ['What','luck'], ['great'] ]  
+
+>>> p2 = [4, 3, 1]
+>>> fastest_words({'words': ['What', 'great', 'luck'], 'times': [p0, p1, p2]})
+[ ['What'], ['great'], ['luck'] ] 
+```

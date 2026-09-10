@@ -311,7 +311,7 @@ def minimum_mewtations(entered: str, source: str, limit: int) -> int:
 
 
 # Ignore the line below
-minimum_mewtations = count(minimum_mewtations)
+# minimum_mewtations = count(minimum_mewtations) 没搞明白这样的作用是什么，一直报错我就给注释掉了。
 
 
 def final_diff(entered: str, source: str, limit: int) -> int:
@@ -352,7 +352,18 @@ def report_progress(entered: list[str], source: list[str], user_id: int, upload)
     0.2
     """
     # BEGIN PROBLEM 8
-    "*** YOUR CODE HERE ***"
+    correctness = 0
+    words_of_entered = len(entered)
+    words_of_source = len(source)
+    min_len = min(words_of_entered, words_of_source)
+    for i in range(min_len):
+        if entered[i] == source[i]:
+            correctness += 1
+        else:
+            break
+    ratio = correctness / words_of_source
+    upload({'id': user_id, 'progress': ratio})
+    return ratio
     # END PROBLEM 8
 
 
@@ -376,7 +387,12 @@ def time_per_word(words: list[str], timestamps_per_player: list[list[int]]) -> d
     """
     ts_by_player = timestamps_per_player  # A shorter name (for convenience)
     # BEGIN PROBLEM 9
-    times = []  # You may remove this line
+    times = []
+    for i in range(len(ts_by_player)):
+        tmp = [0] * (len(ts_by_player[0]) - 1)
+        for j in range(len(ts_by_player[0]) -1):
+            tmp[j] = ts_by_player[i][j+1] - ts_by_player[i][j]
+        times.append(tmp)
     # END PROBLEM 9
     return {'words': words, 'times': times}
 
@@ -403,8 +419,19 @@ def fastest_words(words_and_times: dict) -> list[list[str]]:
     words, times = words_and_times['words'], words_and_times['times']
     pl_idxs = range(len(times))  # contains an *index* for each player
     w_idxs = range(len(words))    # contains an *index* for each word
+    
+    fastest_words = [[] for _ in range(len(times))] # [] * n，并不是全套的空列表，还是只是[]，一个一层的空列表。
     # BEGIN PROBLEM 10
-    "*** YOUR CODE HERE ***"
+    for i in w_idxs:
+        fastest_time = get_time(times, 0, i)
+        fasteds_player = 0
+        for j in pl_idxs:
+            if get_time(times, j, i) < fastest_time:
+                fastest_time = get_time(times, j, i)
+                fasteds_player = j
+        fastest_words[fasteds_player].append(words[i])
+
+    return fastest_words
     # END PROBLEM 10
 
 
@@ -464,7 +491,7 @@ def run_typing_test(topics):
 
         elapsed = (datetime.now() - start).total_seconds()
         print("Nice work!")
-        print("Words per minute:", wpm(entered, elapsed))
+        print("Words per minute:", wpm(entered, int(elapsed)))
         print("Accuracy:        ", accuracy(entered, source))
 
         print("\nPress enter/return for the next paragraph or type q to quit.")
