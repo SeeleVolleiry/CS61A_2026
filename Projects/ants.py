@@ -27,7 +27,8 @@ class Place:
         self.entrance: Place | None = None
         # Phase 1: Add an entrance to the exit
         # BEGIN Problem 2
-        "*** YOUR CODE HERE ***"
+        if exit is not None:
+            exit.entrance = self
         # END Problem 2
 
     def add_insect(self, insect: Insect):
@@ -168,6 +169,8 @@ class ThrowerAnt(Ant):
     implemented = True
     damage = 1
     food_cost = 3 # Probelm 1 partA
+    upper_bound = float('inf') # return a infinite positive value.
+    lower_bound = 0
 
     def nearest_bee(self) -> Bee | None:
         """Return a random Bee from the nearest Place (excluding the Hive) that contains Bees and is reachable from
@@ -178,7 +181,24 @@ D
         if not self.place:
             return None  # An Ant that is not in a Place has no nearest Bee
         # BEGIN Problem 3 and 4
-        return random_bee(self.place.bees) # REPLACE THIS LINE
+        ''' Problem 3 solution:
+        curr_place = self.place
+        #先判断是否为None，不为None才有is_hive属性，才能判断is_hive的真假。
+        while  curr_place is not None and not curr_place.is_hive: 
+            if curr_place.bees:
+                return random_bee(curr_place.bees)
+            curr_place = curr_place.entrance
+        return None
+        '''
+        curr_place, distance_away = self.place, 0
+        #先判断是否为None，不为None才有is_hive属性，才能判断is_hive的真假。
+        while  (curr_place is not None) and (not curr_place.is_hive):
+            # 范围判断不能放在循环入口。当下界不为零时，distance_away却等于0，直接不能进入循环。
+            if curr_place.bees and (self.lower_bound <= distance_away <= self.upper_bound):
+                return random_bee(curr_place.bees)
+            curr_place = curr_place.entrance
+            distance_away += 1
+        return None
         # END Problem 3 and 4
 
     def throw_at(self, target: Bee | None):
@@ -209,8 +229,9 @@ class ShortThrower(ThrowerAnt):
     name = 'Short'
     food_cost = 2
     # OVERRIDE CLASS ATTRIBUTES HERE
+    upper_bound = 3
     # BEGIN Problem 4
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
     # END Problem 4
 
 
@@ -220,8 +241,9 @@ class LongThrower(ThrowerAnt):
     name = 'Long'
     food_cost = 2
     # OVERRIDE CLASS ATTRIBUTES HERE
+    lower_bound = 5
     # BEGIN Problem 4
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
     # END Problem 4
 
 
@@ -233,7 +255,7 @@ class FireAnt(Ant):
     food_cost = 5
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 5
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
     # END Problem 5
 
     def __init__(self, health: int = 3):
@@ -248,11 +270,31 @@ class FireAnt(Ant):
         the additional damage if the fire ant dies.
         """
         # BEGIN Problem 5
-        "*** YOUR CODE HERE ***"
+        
+        # 对当前place的所有bees造成反射伤害
+        reflect_damage = damage_taken
+        if (self.place is not None) and (self.health - damage_taken > 0):
+            for bee in list(self.place.bees):
+                bee.reduce_health(reflect_damage)
+        # 如果自身血量为零，移除自身、造成爆炸伤害
+        if (self.health - damage_taken <= 0) and (self.place is not None):
+            for bee in list(self.place.bees):
+                bee.reduce_health(self.damage+reflect_damage)
+        # 受到伤害，自身降低血量
+        super().reduce_health(damage_taken) # Insect.reduce_health(self, damage_taken)直接到了最高层的父类，不能通过测试。
         # END Problem 5
 
 # BEGIN Problem 6
-# The WallAnt class
+class WallAnt(Ant):
+    name = 'Wall'
+    food_cost = 4
+    implemented = True
+
+    def __init__(self, health:int = 4):
+        super().__init__(health)
+    # actionf方法可写可不写
+    # def action(self, gamestate: GameState):
+    #     return super().action(gamestate)
 # END Problem 6
 
 # BEGIN Problem 7

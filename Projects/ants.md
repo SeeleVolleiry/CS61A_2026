@@ -2,6 +2,8 @@
 
 **完成Ants vs SomeBees**这一游戏所需要的类，植物大战僵尸 :)
 
+# Phase 1：Basic gameplay
+
 # Problem 0:
 
 Answer a set of conceptual questions after you have read the entire ants.py
@@ -194,31 +196,504 @@ Hint:
     This means that you can't do something like colony[index + 1] to access an adjacent Place.
     How can you move from one place to another?
 
+**易错点**:
+
+    一个palce的出口时exit，那么exit的入口就是该place。
+
+    在Place class中完成problem 2时，应注意判断出口是否为None。创建一个Place实例时，传入的参数exit可以为None。
+    对于None类型，其没有entrance属性。这会产生错误，使得测试不通过。
 
 *python3 ok -q 02 -u*
 ```python
+---------------------------------------------------------------------
+Q: What does a Place represent in the game?
+Choose the number of the correct choice:
+0) Where the bees start out in the game
+1) The entire space where the game takes place
+2) The tunnel that bees travel through
+3) A single tile that an Ant can be placed on and that connects to
+   other Places
+? 3
+---------------------------------------------------------------------
+Q: p is a Place whose entrance is q and exit is r (q and r are not None). Whenis p.entrance first set to a non-None value?
+Choose the number of the correct choice:
+0) When q is constructed
+1) When p is constructed
+2) Never, it is always set to None
+? 0
+---------------------------------------------------------------------
+Q: p is a Place whose entrance is q and exit is r (q and r are not None). Whenis p.exit first set to a non-None value?
+Choose the number of the correct choice:
+0) Never, it is always set to None
+1) When q is constructed
+2) When p is constructed
+? 2
+---------------------------------------------------------------------
+>>> from ants import *
+>>> from ants_plans import *
+>>> #
+>>> # Create a test layout where the gamestate is a single row with 3 tiles
+>>> beehive, layout = Hive(make_test_assault_plan()), dry_layout
+>>> dimensions = (1, 3)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Simple test for Place
+>>> place0 = Place('place_0')
+>>> print(place0.exit)
+? None
 
+>>> print(place0.entrance)
+? None
+
+>>> place1 = Place('place_1', place0)
+>>> place1.exit is place0
+? True
+
+>>> place0.entrance is place1
+? True 
 ```
 
-# Problem 3:
+# Problem 3: ThrowerAnt中的nearset_bee()
 
+从投掷蚁所在格起，一格一格向前（沿 entrance）找"最近一格有蜜蜂、且不是 Hive"的地方，随机打那格的一只蜜蜂；一路打不到就返回 None。
 
+Your job is to fix it so that a ThrowerAnt will throw_at the nearest Bee in front of it that is not still in the Hive. 
+This includes Bees that are in the same Place as a ThrowerAnt
+
+Hint: 
+
+    All Places have an is_hive attribute, which is set to True when that place is the Hive and False otherwise.
+
+Change nearest_bee so that it returns a random Bee from the nearest Place that contains Bees.
+
+*Your implementation should follow this logic*:
+
+    Start from the ThrowerAnt's current Place.
+    If the Place contains one or more Bees, return a random one. Otherwise, check the next Place in front of it (stored as the current Place's entrance).
+    Repeat this process until a Bee is found and returned. If no Bee is available to attack, return None.
+    Ensure that Bees in the Hive are never returned by nearest_bee.
+
+Hint:
+    
+    The random_bee function provided in ants.py returns a random Bee from a list of Bees or None if the list is empty.
+    As a reminder, if there are no Bees present at a Place, then the bees attribute of that Place instance will be an empty list.
+    Having trouble visualizing the test cases? Try drawing them out on paper! The sample diagram provided in Game Layout shows the first test case for this problem.
+
+*python3 ok -q 03 -u*
+```python
+---------------------------------------------------------------------
+Q: What Bee should a ThrowerAnt throw at?
+Choose the number of the correct choice:
+0) The ThrowerAnt finds the nearest place in either direction that has
+   Bees and throws at a random Bee in that place
+1) The ThrowerAnt finds the nearest place behind its own place
+   that has Bees and throws at a random Bee in that place
+2) The ThrowerAnt finds the nearest place including and in front of its
+   own place that has Bees and throws at a random Bee in that place
+3) The ThrowerAnt throws at a random Bee in its own Place
+? 2
+---------------------------------------------------------------------
+Q: How do you get the Place object in front of another Place object?
+Choose the number of the correct choice:
+0) Increment the place by 1
+1) Decrement the place by 1
+2) The place's exit instance attribute
+3) The place's entrance instance attribute
+? 3
+---------------------------------------------------------------------
+Q: What is the entrance of the first Place in a tunnel (i.e. where do the beesenter from)?
+Choose the number of the correct choice:
+0) None
+1) The Hive
+2) An empty Place
+? 1
+---------------------------------------------------------------------
+Q: How can you determine if a given Place is the Hive?
+Choose the number of the correct choice:
+0) by checking the ant attribute of the place instance
+1) by checking the bees attribute of the place instance
+2) by using the is_hive attribute of the place instance
+? 2
+---------------------------------------------------------------------
+Q: What should nearest_bee return if there is no Bee in the tunnel in front ofthe ThrowerAnt?
+Choose the number of the correct choice:
+0) The closest Bee behind the ThrowerAnt
+1) A random Bee in the Hive
+2) None
+? 2
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> thrower = ThrowerAnt()
+>>> ant_place = gamestate.places["tunnel_0_0"]
+>>> ant_place.add_insect(thrower)
+>>> #
+>>> # Testing nearest_bee
+>>> near_bee = Bee(2) # A Bee with 2 health
+>>> far_bee = Bee(3)  # A Bee with 3 health
+>>> hive_bee = Bee(4) # A Bee with 4 health
+>>> hive_place = gamestate.beehive
+>>> hive_place.is_hive # Check if this place is the Hive
+? True
+
+>>> hive_place.add_insect(hive_bee)
+>>> thrower.nearest_bee() is hive_bee # Bees in the Hive can never be attacked
+? False
+
+>>> near_place = gamestate.places['tunnel_0_3']
+>>> far_place = gamestate.places['tunnel_0_6']
+>>> near_place.is_hive # Check if this place is the Hive
+? False
+
+>>> near_place.add_insect(near_bee)
+>>> far_place.add_insect(far_bee)
+>>> nearest_bee = thrower.nearest_bee()
+>>> thrower.place is ant_place    # Don't change self.place!
+? True
+
+>>> nearest_bee is far_bee
+? False
+
+>>> nearest_bee is near_bee
+? True
+
+>>> nearest_bee.health
+? 2
+
+>>> thrower.action(gamestate)    # Attack! ThrowerAnts do 1 damage
+>>> near_bee.health
+? 1
+
+>>> far_bee.health
+? 3
+
+>>> thrower.place is ant_place    # Don't change self.place!
+? True
+```
+
+# Phase 2：More Ants
+
+After you implement each Ant subclass in these sections, you'll need to set its implemented class attribute to True.
 
 # Problem 4:
 
+**易错点**：
+
+    1. 先判断是否为None，不为None才有is_hive属性，才能判断is_hive的真假。
+    2. 范围判断不能放在循环入口。当下界不为零时，distance_away却等于0，直接不能进入循环。
+
+In this problem, you'll implement two subclasses of ThrowerAnt that are less costly but have constraints on the distance they can throw:
+
+    The LongThrower can only throw_at a Bee that is found after following at least 5 entrance transitions. In other words, it cannot hit Bees that are in the same Place as it or in the first 4 Places in front of it. If there are two Bees, one too close to the LongThrower and the other within its range, the LongThrower should only throw at the farther Bee, which is within its range, instead of trying to hit the closer Bee.
+    
+    The ShortThrower can only throw_at a Bee that is found after following at most 3 entrance transitions. In other words, it cannot throw at any Bees further than 3 Places in front of it.
+
+    Neither of these specialized throwers can throw_at a Bee that is exactly 4 Places away.
 
 
-# Problem 5:
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|ShortThrower|	2|	1|
+|LongThrower |	2|	1|
+
+*python3 ok -q 04 -u*
+```python
+---------------------------------------------------------------------
+Q: What class do ShortThrower and LongThrower inherit from?
+Choose the number of the correct choice:
+0) Bee
+1) ThrowerAnt
+2) ShortThrower
+3) LongThrower
+? 1
+---------------------------------------------------------------------
+Q: What constraint does a regular ThrowerAnt have on its throwing distance?
+Choose the number of the correct choice:
+0) A regular ThrowerAnt can only attack Bees at most 3 places away
+1) A regular ThrowerAnt can only attack Bees at least 3 places away
+2) There is no restriction on how far a regular ThrowerAnt can throw
+3) A regular ThrowerAnt can only attack Bees at most 5 places away
+? 2
+---------------------------------------------------------------------
+Q: What constraint does a LongThrower have on its throwing distance?
+Choose the number of the correct choice:
+0) A LongThrower can only attack Bees at least 3 places away
+1) A LongThrower can only attack Bees at least 5 places away
+2) There is no restriction on how far a LongThrower can throw
+3) A LongThrower can only attack Bees at most 5 places away
+? 1
+---------------------------------------------------------------------
+Q: What constraint does a ShortThrower have on its throwing distance?
+Choose the number of the correct choice:
+0) A ShortThrower can only attack Bees at least 3 places away
+1) There is no restriction on how far a ShortThrower can throw
+2) A ShortThrower can only attack Bees at most 3 places away
+3) A ShortThrower can only attack Bees at most 5 places away
+? 2
+---------------------------------------------------------------------
+Q: With the addition of these new ThrowerAnt subclasses, we must modify
+our definition of nearest_bee. Now what Bee should ThrowerAnts throw
+at?
+Choose the number of the correct choice:
+0) The closest random Bee in front of it within range
+1) Any Bee in its current Place
+2) Any Bee within range
+3) The closest random Bee behind it within range
+? 0
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing Long/ShortThrower parameters
+>>> ShortThrower.food_cost
+? 2
+
+>>> LongThrower.food_cost
+? 2
+
+>>> short_t = ShortThrower()
+>>> long_t = LongThrower()
+>>> short_t.health
+? 1
+
+>>> long_t.health
+? 1
+```
 
 
+# Problem 5: Implement FireAnt Class
 
-# Problem 6:
+Implement the FireAnt.
+    
+    If FireAnt is damaged by damage_taken health units, it does a damage of damage_taken to all Bees in its place (this is called reflected damage). 
+    If it dies, it does an additional amount of damage, as specified by its damage attribute, to all the Bees in its place.
+    The default value for the damage attribute in the FireAnt class is 3.
+
+To implement this, override FireAnt's reduce_health method. 
+Your overriden method should call the reduce_health method inherited from the superclass (Ant) which inherits from its superclass Insect to reduce the current FireAnt instance's health. 
+Calling the inherited reduce_health method on a FireAnt instance reduces the insect's health by the given damage_taken and removes the insect from its place if its health reaches zero or lower.
+
+your method needs to also include the reflective damage logic:
+
+    Determine the reflective damage amount: start with the damage_taken inflicted on the FireAnt, and then add damage if the ant's health has dropped to or below 0.
+    
+    For each Bee in the place, damage them with the total reflective damage amount by calling its appropriate reduce_health method.
+    
+    Remember that when any Ant loses all its health, it is removed from its Place, so pay careful attention to the order of your logic in reduce_health.
+
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|FireAnt| 5 | 3 |
+
+*python3 ok -q 05 -u*:易错点就在回答中
+```python
+---------------------------------------------------------------------
+Problem 5 > Suite 1 > Case 1
+(cases remaining: 16)
+
+Q: How can you obtain the current place of a FireAnt?
+Choose the number of the correct choice:
+0) By calling the Place constructor, passing in the FireAnt instance
+1) By calling the FireAnt constructor
+2) By accessing the place instance attribute, which is the name of
+   some Place object
+3) By accessing the place instance attribute, which is a Place object
+? 3
+-- OK! --
+
+---------------------------------------------------------------------
+Problem 5 > Suite 1 > Case 2
+(cases remaining: 15)
+
+Q: How can you obtain all of the Bees currently in a given place?
+Choose the number of the correct choice:
+0) By calling the add_insect method on the place instance
+1) By accessing the bees instance attribute, which is a dictionary of
+   Bee objects
+2) By calling the Bee constructor, passing in the place instance
+3) By accessing the bees instance attribute, which is a list of Bee
+   objects
+? 3
+-- OK! --
+
+---------------------------------------------------------------------
+Problem 5 > Suite 1 > Case 3
+(cases remaining: 14)
+
+Q: Can you iterate over a list while mutating it?
+Choose the number of the correct choice:
+0) No, Python doesn't allow list mutation on a list that is being
+   iterated through
+1) Yes, you can mutate a list while iterating over it with no problems
+2) Yes, but you should iterate over a copy of the list to avoid skipping
+   elements
+? 0
+-- Not quite. Try again! --
+
+Choose the number of the correct choice:
+0) No, Python doesn't allow list mutation on a list that is being
+   iterated through
+1) Yes, you can mutate a list while iterating over it with no problems
+2) Yes, but you should iterate over a copy of the list to avoid skipping
+   elements
+? 2
+-- OK! --
+
+---------------------------------------------------------------------
+Problem 5 > Suite 2 > Case 1
+(cases remaining: 13)
+
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing FireAnt parameters
+>>> fire = FireAnt()
+>>> FireAnt.food_cost
+? 5
+-- OK! --
+
+>>> fire.health
+? 3
+-- OK! --
+
+---------------------------------------------------------------------
+Problem 5 > Suite 2 > Case 2
+(cases remaining: 12)
+
+-- Already unlocked --
+
+---------------------------------------------------------------------
+Problem 5 > Suite 2 > Case 3
+(cases remaining: 11)
+
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing fire does damage to all Bees in its Place
+>>> place = gamestate.places['tunnel_0_4']
+>>> fire = FireAnt(health=1)
+>>> place.add_insect(fire)        # Add a FireAnt with 1 health
+>>> place.add_insect(Bee(3))      # Add a Bee with 3 health
+>>> place.add_insect(Bee(5))      # Add a Bee with 5 health
+>>> len(place.bees)               # How many bees are there?
+? 2
+-- OK! --
+
+>>> place.bees[0].action(gamestate)  # The first Bee attacks FireAnt
+>>> fire.health
+? 0
+-- OK! --
+
+>>> fire.place is None
+? True
+-- OK! --
+
+>>> len(place.bees)               # How many bees are left?
+? 2
+-- Not quite. Try again! --
+
+? 1
+-- OK! --
+
+>>> place.bees[0].health           # What is the health of the remaining Bee?
+? 0
+-- Not quite. Try again! --
+
+? -1
+-- Not quite. Try again! --
+
+? 1
+-- OK! --
+
+---------------------------------------------------------------------
+Problem 5 > Suite 2 > Case 4
+(cases remaining: 10)
+
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> place = gamestate.places['tunnel_0_4']
+>>> ant = FireAnt(health=1)           # Create a FireAnt with 1 health
+>>> place.add_insect(ant)      # Add a FireAnt to place
+>>> ant.place is place
+? True 
+-- OK! --
+
+>>> place.remove_insect(ant)   # Remove FireAnt from place
+>>> ant.place is place         # Is the ant's place still that place?
+? False
+-- OK! --
+```
+
+# Problem 6: WallAnt
+
+Unlike with previous ants, we have not provided you with a class statement.
+Implement the WallAnt class from scratch:
+    Give it a class attribute name with the value 'Wall'
+    Give it a class attribute implemented with the value True.
+
+Hint: 
+    Make sure you implement the \__init__ method too so the WallAnt starts off with the appropriate amount of health!
+
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|WallAnt| 4 | 4 |
 
 
+*python3 ok -q 06 -u*:从中可以理解WallAnt class的属性、方法
+```python
+---------------------------------------------------------------------
+Q: What class does WallAnt inherit from?
+Choose the number of the correct choice:
+0) HungryAnt
+1) The WallAnt class does not inherit from any class
+2) Ant
+3) ThrowerAnt
+? 2
+---------------------------------------------------------------------
+Q: What is a WallAnt's action?
+Choose the number of the correct choice:
+0) A WallAnt increases its own health by 1 each turn
+1) A WallAnt attacks all the Bees in its place each turn
+2) A WallAnt takes no action each turn
+3) A WallAnt reduces its own health by 1 each turn
+? 2
+---------------------------------------------------------------------
+Q: Where do Ant subclasses inherit the action method from?
+Choose the number of the correct choice:
+0) Ant subclasses inherit the action method from the Ant class
+1) Ant subclasses do not inherit the action method from any class
+2) Ant subclasses inherit the action method from the Insect class
+? 2
+---------------------------------------------------------------------
+Q: If a subclass of Ant does not override the action method, what is the
+default action?
+Choose the number of the correct choice:
+0) Move to the next place
+1) Nothing
+2) Throw a leaf at the nearest Bee
+3) Reduce the health of all Bees in its place
+? 1
+```
 
-# Problem 7:
+# Problem 7: HurryAnt
 
+大嘴花/食人花的机制。
 
+*python3 ok -q 07 -u*：
+```python
+
+```
 
 # Problem 8:
 
