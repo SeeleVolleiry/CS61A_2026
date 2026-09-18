@@ -503,7 +503,7 @@ Choose the number of the correct choice:
    some Place object
 3) By accessing the place instance attribute, which is a Place object
 ? 3
--- OK! --
+
 
 ---------------------------------------------------------------------
 Problem 5 > Suite 1 > Case 2
@@ -518,7 +518,7 @@ Choose the number of the correct choice:
 3) By accessing the bees instance attribute, which is a list of Bee
    objects
 ? 3
--- OK! --
+
 
 ---------------------------------------------------------------------
 Problem 5 > Suite 1 > Case 3
@@ -541,7 +541,7 @@ Choose the number of the correct choice:
 2) Yes, but you should iterate over a copy of the list to avoid skipping
    elements
 ? 2
--- OK! --
+
 
 ---------------------------------------------------------------------
 Problem 5 > Suite 2 > Case 1
@@ -556,11 +556,11 @@ Problem 5 > Suite 2 > Case 1
 >>> fire = FireAnt()
 >>> FireAnt.food_cost
 ? 5
--- OK! --
+
 
 >>> fire.health
 ? 3
--- OK! --
+
 
 ---------------------------------------------------------------------
 Problem 5 > Suite 2 > Case 2
@@ -585,23 +585,23 @@ Problem 5 > Suite 2 > Case 3
 >>> place.add_insect(Bee(5))      # Add a Bee with 5 health
 >>> len(place.bees)               # How many bees are there?
 ? 2
--- OK! --
+
 
 >>> place.bees[0].action(gamestate)  # The first Bee attacks FireAnt
 >>> fire.health
 ? 0
--- OK! --
+
 
 >>> fire.place is None
 ? True
--- OK! --
+
 
 >>> len(place.bees)               # How many bees are left?
 ? 2
 -- Not quite. Try again! --
 
 ? 1
--- OK! --
+
 
 >>> place.bees[0].health           # What is the health of the remaining Bee?
 ? 0
@@ -611,7 +611,7 @@ Problem 5 > Suite 2 > Case 3
 -- Not quite. Try again! --
 
 ? 1
--- OK! --
+
 
 ---------------------------------------------------------------------
 Problem 5 > Suite 2 > Case 4
@@ -627,12 +627,12 @@ Problem 5 > Suite 2 > Case 4
 >>> place.add_insect(ant)      # Add a FireAnt to place
 >>> ant.place is place
 ? True 
--- OK! --
+
 
 >>> place.remove_insect(ant)   # Remove FireAnt from place
 >>> ant.place is place         # Is the ant's place still that place?
 ? False
--- OK! --
+
 ```
 
 # Problem 6: WallAnt
@@ -686,29 +686,470 @@ Choose the number of the correct choice:
 ? 1
 ```
 
-# Problem 7: HurryAnt
+# Problem 7: HungryAnt
 
 大嘴花/食人花的机制。
 
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|HungryAnt| 4 | 1 |
+
 *python3 ok -q 07 -u*：
+```python
+---------------------------------------------------------------------
+Q: Should cooldown be an instance or class attribute? Why?
+Choose the number of the correct choice:
+0) instance, all HungryAnt instances in the game chew simultaneously
+1) class, each HungryAnt instance chews independently of other
+   HungryAnt instances
+2) class, all HungryAnt instances in the game chew simultaneously
+3) instance, each HungryAnt instance chews independently of other
+   HungryAnt instances
+? 3
+---------------------------------------------------------------------
+Q: When is a HungryAnt able to eat a Bee?
+Choose the number of the correct choice:
+0) Whenever a Bee is in its place
+1) When it is chewing, i.e. when its cooldown attribute is at least 1
+2) Each turn
+3) When it is not chewing, i.e. when its cooldown attribute is 0
+? 3
+---------------------------------------------------------------------
+Q: When a HungryAnt is able to eat, which Bee does it eat?
+Choose the number of the correct choice:
+0) The closest Bee in either direction
+1) The closest Bee in front of it
+2) The closest Bee behind it
+3) A random Bee in the same place as itself
+? 3
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing HungryAnt parameters
+>>> hungry = HungryAnt()
+>>> HungryAnt.food_cost
+? 4
+
+>>> hungry.health
+? 1
+
+>>> hungry.chew_cooldown
+? 3
+
+>>> hungry.cooldown
+? 0
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing HungryAnt eats and chews
+>>> hungry = HungryAnt()
+>>> super_bee, wimpy_bee = Bee(1000), Bee(1)
+>>> place = gamestate.places["tunnel_0_0"]
+>>> place.add_insect(hungry)
+>>> place.add_insect(super_bee)
+>>> hungry.action(gamestate)         # super_bee is no match for HungryAnt!
+>>> super_bee.health
+? 0   
+
+
+>>> place.add_insect(wimpy_bee)
+>>> for _ in range(3):
+...     hungry.action(gamestate)     # chewing...not eating
+>>> wimpy_bee.health
+? 1
+
+>>> hungry.action(gamestate)         # back to eating!
+>>> wimpy_bee.health
+? 0
+```
+
+# Problem 8: ProtectorAnt
+
+To more easily implement the ProtectorAnt, we will break up this problem into 3 subparts. In each part, we will making changes in either the ContainerAnt class, Ant class, or ProtectorAnt class.
+
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|ProtectorAnt| 4 | 2 |
+
+## Problem 8a：ContainerAnt
+
+We will define and work in a *ContainerAnt* parent class that we will later use for our ProtectorAnt.
+
+   instance attribute：ant_contained， storing the ant it contains. This ant, ant_contained, initially starts off as None to indicate that there is no ant being stored yet. 
+
+   store_ant method: it sets the ContainerAnt's ant_contained instance attribute to the ant argument passed in.
+
+   action method: This method will ensure that if our ContainerAnt currently contains an ant, ant_contained's action is performed.
+
+*python3 ok -q 08a -u*
+```python
+---------------------------------------------------------------------
+Q: Where is the ant contained by a ContainerAnt stored?
+Choose the number of the correct choice:
+0) In the ContainerAnt's ant_contained class attribute
+1) In the ContainerAnt's ant_contained instance attribute
+2) Nowhere, a ContainerAnt has no knowledge of the ant that it's protecting
+3) In its place's ant instance attribute
+? 1
+-- OK! --
+---------------------------------------------------------------------
+Q: How does a ContainerAnt guard its ant?
+Choose the number of the correct choice:
+0) By allowing Bees to pass without attacking
+1) By increasing the ant's health
+2) By attacking Bees that try to attack it
+3) By protecting the ant from Bees and allowing it to perform its original action
+? 3
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> gamestate = GameState(beehive, ant_types(), layout, (1, 9))
+>>> #
+>>> container = ContainerAnt(1)
+>>> container2 = ContainerAnt(2)
+>>> container3 = ContainerAnt(3)
+>>> throw_long = LongThrower(1)
+>>> container.can_contain(container2)
+? False
+-- OK! --
+
+>>> container3.can_contain(throw_long)
+? True
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> gamestate = GameState(beehive, ant_types(), layout, (1, 9))
+>>> #
+>>> container = ContainerAnt(2)
+>>> friend = HungryAnt()
+>>> container.ant_contained is None
+? True
+-- OK! --
+
+>>> container.store_ant(friend)
+>>> container.ant_contained is friend
+? True
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), dry_layout
+>>> gamestate = GameState(beehive, ant_types(), layout, (1, 9))
+>>> #
+>>> container = ContainerAnt(2)
+>>> container.ant_contained is not None
+? False
+-- OK! --
+
+>>> friend = HungryAnt()
+>>> container.store_ant(friend)
+>>> container.ant_contained is friend
+? True
+-- OK! --
+
+>>> place = gamestate.places["tunnel_0_0"]
+>>> place.add_insect(container)
+>>> friend.place = place
+>>> bee = Bee(3)
+>>> place.add_insect(bee)
+>>> container.action(gamestate)  # Container holds a HungryAnt that loves to eat!
+>>> bee.health
+? 0
+-- OK! --
+
+>>> container.can_contain(FireAnt()) # Container already holds another ant!
+? False
+-- OK! --
+```
+
+## Problem 8b：Modify Ant.add_to()
+
+Modify Ant.add_to to allow a container and its contained ant to occupy the same place according to the following rules:
+
+   If the Ant originally occupying a place can_contain the Ant being added, then both Ants occupy the place and the original Ant contains the Ant being added.
+   
+   If the Ant being added can_contain the Ant originally in the space, then both Ants occupy the place and the Ant being added contains the original Ant.
+   
+   If neither Ant can_contain the other, raise the same AssertionError as before (the one already present in the starter code).
+
+Important:
+   
+   If there are two Ants in a specific Place, the ant attribute of the Place instance should refer to the container ant, and the container ant should contain the non-container ant.
+
+Hint: 
+   
+   You should also take advantage of the can_contain method you wrote and avoid repeating code.
+
+Note:
+   
+   If you're getting an "unreachable code" warning for Ant.add_to via the VSCode Pylance extension, it's fine to ignore this specific warning as the code is actually run (the warning in this case is inaccurate).
+
+*python3 ok -q 08b -u*:
+```python
+---------------------------------------------------------------------
+Q: When can a second Ant be added to a place that already contains an Ant?
+Choose the number of the correct choice:
+0) When exactly one of the Ant instances is a container and the
+   container ant does not already contain another ant
+1) When exactly one of the Ant instances is a container
+2) There can never be two Ant instances in the same place
+3) When both Ant instances are containers
+? 0
+-- OK! --
+---------------------------------------------------------------------
+Q: If two Ants occupy the same Place, what is stored in that place's ant
+instance attribute?
+Choose the number of the correct choice:
+0) A list containing both Ants
+1) The Ant being contained
+2) Whichever Ant was placed there first
+3) The Container Ant
+? 3
+-- OK! --
+---------------------------------------------------------------------
+Problem 8b > Suite 1 > Case 3
+(cases remaining: 5)
+
+Q: Which Ant does a ContainerAnt guard?
+Choose the number of the correct choice:
+0) The Ant instance in the place closest to its own place
+1) The Ant instance that is in the same place as itself
+2) A random Ant instance in the gamestate
+3) All the Ant instances in the gamestate
+? 1
+-- OK! --
+```
+
+## Problem 8c：
+
+Finally, we can work on implementing our ProtectorAnt class.
+
+   Add a ProtectorAnt.\__init__ that sets the initial amount of health for the ProtectorAnt.
+   
+   We do not need to create an action method here since the ProtectorAnt class inherits it from the ContainerAnt class.
+   
+   Also note that the ProtectorAnt does not do any damage.
+
+   Once you've finished implementing the ProtectorAnt, give it a class attribute implemented with the value True.
+
+*python3 ok -q 08c -u*
+```python
+---------------------------------------------------------------------
+Q: Where does a ProtectorAnt directly inherit all of its instance attributes from?
+Choose the number of the correct choice:
+0) Ant class
+1) ContainerAnt class
+2) Insect class
+3) the ProtectorAnt does not inherit from any other class
+? 1
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> # Testing ProtectorAnt parameters
+>>> protector = ProtectorAnt()
+>>> ProtectorAnt.food_cost
+? 4
+-- OK! --
+
+>>> protector.health
+? 2
+-- OK! --
+```
+
+# Problem 9: TankAnt
+
+The TankAnt is a ContainerAnt that protects an ant in its place and also deals 1 damage to all Bees in its Place each turn.
+Like any ContainerAnt, a TankAnt allows the ant that it contains to perform its action each turn.
+
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|TankAnt| 6 | 2 |
+
+*python3 ok -q 09 -u*
+```python
+nothing worth recording.
+```
+
+# Phase 3: Water and Might
+
+In the final phase, you're going to add one last kick to the game by introducing a new type of place and new ants that are able to occupy this place.
+One of these ants is the most important ant of them all: the queen of the colony!
+
+# Problem 10: Water.add_insect()
+
+We're going to create a new type of Place called Water.
+
+Implement the add_insect method for Water.
+   
+   First, add the Insect to the Place regardless of whether it is waterproof.
+   Then, if the Insect is not waterproof, reduce the Insect's health to 0.
+   Do not repeat code from elsewhere in the program. Instead, use methods that have already been defined.
+
+*python3 ok -q 10 -u*
+```python
+---------------------------------------------------------------------
+>>> from ants import *
+>>> from ants_plans import *
+>>> beehive, layout = Hive(make_test_assault_plan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing water with soggy (non-waterproof) bees
+>>> test_bee = Bee(1000000)
+>>> test_bee.is_waterproof = False    # Make Bee non-waterproof
+>>> test_water = Water('Water Test2')
+>>> test_water.add_insect(test_bee)
+>>> test_bee.health
+? 0
+-- OK! --
+
+>>> len(test_water.bees)
+? 0
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> from ants_plans import *
+>>> beehive, layout = Hive(make_test_assault_plan()), dry_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing water with waterproof bees
+>>> test_bee = Bee(1)
+>>> test_water = Water('Water Test3')
+>>> test_water.add_insect(test_bee)
+>>> test_bee.health
+? 1
+-- OK! --
+
+>>> test_bee in test_water.bees
+? True
+-- OK! --
+```
+
+# Problem 11: ScubaThrower
+
+Implement the ScubaThrower, which is a subclass of ThrowerAnt that is more costly and waterproof, but otherwise identical to its base class.
+A ScubaThrower should not lose its health when placed in Water.
+
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|ScubaThrower| 6 | 1 |
+
+*python3 ok -q 11 -u*
+```python
+---------------------------------------------------------------------
+Q: How is a ScubaThrower different from a regular ThrowerAnt?
+Choose the number of the correct choice:
+0) It is not waterproof, so its health will be reduced to 0 when it is
+   placed in a Water Place
+1) It throws water pellets instead of leaves
+2) It is waterproof, so its health won't be reduced to 0 when it is
+   placed in a Water Place
+? 2
+-- OK! --
+---------------------------------------------------------------------
+Q: Which inherited attributes and/or methods should ScubaThrower
+override?
+Choose the number of the correct choice:
+0) food_cost, action, damage
+1) name, nearest_bee, is_waterproof
+2) name, is_waterproof, food_cost
+3) is_waterproof, action
+? 2
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> # Testing ScubaThrower parameters
+>>> scuba = ScubaThrower()
+>>> ScubaThrower.food_cost
+? 6
+-- OK! --
+
+>>> scuba.health
+? 1
+-- OK! --
+
+>>> scuba.name
+? 'Scuba'
+-- OK! --
+
+>>> scuba.is_waterproof
+? True
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), wet_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing if ScubaThrower is waterproof
+>>> water = gamestate.places["water_0_2"]
+>>> ant = ScubaThrower()
+>>> water.add_insect(ant)
+>>> ant.place is water
+? True
+-- OK! --
+
+>>> ant.health
+? 1
+-- OK! --
+---------------------------------------------------------------------
+>>> from ants import *
+>>> beehive, layout = Hive(AssaultPlan()), wet_layout
+>>> dimensions = (1, 9)
+>>> gamestate = GameState(beehive, ant_types(), layout, dimensions)
+>>> #
+>>> # Testing that ThrowerAnt is not waterproof
+>>> water = gamestate.places["water_0_2"]
+>>> ant = ThrowerAnt()
+>>> ant.is_waterproof
+? False
+-- OK! --
+
+>>> water.add_insect(ant)
+>>> ant.place is water
+? False
+-- OK! --
+
+>>> ant.health
+? 0
+-- OK! --
+```
+
+# Problem 12: QueenAnt
+
+A queen is a ThrowerAnt that inspires her fellow ants through her bravery.
+In addition to the standard ThrowerAnt action, a QueenAnt doubles the damage of all the ants behind her in her tunnel each time she performs an action.
+However, once an ant's damage has been doubled, it cannot be doubled again. Try to think of a way to keep track of whether an ant's damage has already been doubled (Hint: Use an instance attribute!)
+
+Note: The reflected damage of a FireAnt should not be doubled, only the extra damage it deals when its health is reduced to 0.
+
+However, with great power comes great responsibility.
+If a QueenAnt ever has its health reduced to 0, the ants lose.
+You will need to override Insect.reduce_health in QueenAnt and call ants_lose() in that case in order to signal to the simulator that the game is over. (The ants also still lose if any bee reaches the end of a tunnel.)
+
+Hint: 
+
+   For doubling the damage of all ants behind her, you may fill out the double method defined in the Ant class, then call it from the QueenAnt class.
+
+   When doubling the ants' damage, keep in mind that there can be more than one ant in a Place, like in the case of container ants storing another.
+
+   Remember that QueenAnt's reduce_health method adds the additional task of calling ants_lose() to the superclass's reduce_health method. How can we make sure we still do everything from the superclass's method without repeating code?
+
+   You can find each Place in a tunnel behind a QueenAnt by starting at the queen's place.exit and then repeatedly moving back to the previous Place's exit. The exit of a Place at the end of a tunnel is None.
+
+|Class|Food Cost|Initial Health|
+|:---:|:---:|:---:|
+|QueenAnt| 7 | 1 |
+
+*python3 ok -q 12 -u*
 ```python
 
 ```
-
-# Problem 8:
-
-
-
-# Problem 9:
-
-
-
-# Problem 10:
-
-
-
-# Problem 11:
-
-
-
-# Problem 12:

@@ -53,6 +53,7 @@ class Insect:
     next_id = 0  # Every insect gets a unique id number
     damage = 0
     # ADD CLASS ATTRIBUTES HERE
+    is_waterproof = False # Problem 10
 
     def __init__(self, health: int, place: Place | None = None):
         """Create an Insect with a health and a starting PLACE."""
@@ -125,7 +126,16 @@ class Ant(Insect):
             place.ant = self
         else:
             # BEGIN Problem 8b
-            assert place.ant is None, 'Too many ants in {0}'.format(place)
+            assert (place.ant.is_container and not self.is_container) \
+                    or (self.is_container and not place.ant.is_container), 'Too many ants in {0}'.format(place)
+            if place.ant.can_contain(self):
+                place.ant.store_ant(self)
+                # place.ant = self
+            elif self.can_contain(place.ant):
+                self.store_ant(place.ant)
+                place.ant = self
+            else:
+                assert False, 'Too many ants in {0}'.format(place) # 测试里面要求一定要有assert异常抛出
             # END Problem 8b
         Insect.add_to(self, place)
 
@@ -298,7 +308,27 @@ class WallAnt(Ant):
 # END Problem 6
 
 # BEGIN Problem 7
-# The HungryAnt Class
+class HungryAnt(Ant):
+    name = 'Hungry'
+    food_cost = 4
+    implemented = True
+    chew_cooldown = 3 # 来自解锁题
+
+    def __init__(self, health: int = 1):
+        super().__init__(health)
+        self.cooldown = 0 # 来自解锁题
+    def action(self, gamestate: GameState):
+        place = self.place
+        if (place is not None) and (place.bees) and self.cooldown == 0:
+            bee_eaten = random_bee(place.bees)
+            if bee_eaten is not None:
+                bee_eaten.reduce_health(bee_eaten.health)
+            self.cooldown = self.chew_cooldown
+        else:
+            # 不发起攻击。如果在咀嚼，则减少倒计时。
+            if self.cooldown > 0:
+                self.cooldown -= 1
+            return
 # END Problem 7
 
 
@@ -314,12 +344,16 @@ class ContainerAnt(Ant):
 
     def can_contain(self, other: Ant) -> bool:
         # BEGIN Problem 8a
-        "*** YOUR CODE HERE ***"
+        if (not other.is_container) and (self.ant_contained is None):
+            return True
+        else:
+            return False
         # END Problem 8a
 
     def store_ant(self, ant: Ant):
         # BEGIN Problem 8a
-        "*** YOUR CODE HERE ***"
+        if self.can_contain(ant):
+            self.ant_contained = ant
         # END Problem 8a
 
     def remove_ant(self, ant: Ant):
@@ -339,7 +373,8 @@ class ContainerAnt(Ant):
 
     def action(self, gamestate: GameState):
         # BEGIN Problem 8a
-        "*** YOUR CODE HERE ***"
+        if self.ant_contained is not None:
+            self.ant_contained.action(gamestate)
         # END Problem 8a
 
 
@@ -350,11 +385,26 @@ class ProtectorAnt(ContainerAnt):
     food_cost = 4
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 8c
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+
+    def __init__(self, health:int=2):
+        super().__init__(health)
     # END Problem 8c
 
 # BEGIN Problem 9
-# The TankAnt class
+class TankAnt(ContainerAnt):
+    name = 'Tank'
+    food_cost = 6
+    implemented = True
+    damage = 1
+    def __init__(self, health: int=2):
+        super().__init__(health)
+    def action(self, gamestate: GameState):
+        if self.place is not None:
+            for bee in list(self.place.bees): # 自身也能造成伤害
+                # if bee is not None:
+                    bee.reduce_health(self.damage)
+        super().action(gamestate) #不影响被保护的Ant的行动
 # END Problem 9
 
 
@@ -365,11 +415,20 @@ class Water(Place):
         """Add an Insect to this place. If the insect is not waterproof, reduce
         its health to 0."""
         # BEGIN Problem 10
-        "*** YOUR CODE HERE ***"
+        super().add_insect(insect)
+        if not insect.is_waterproof:
+            insect.reduce_health(insect.health) # 解锁测试已经告诉你要使用这个方法了。
         # END Problem 10
 
 # BEGIN Problem 11
-# The ScubaThrower class
+class ScubaThrower(ThrowerAnt):
+    name ='Scuba'
+    food_cost = 6
+    implemented = True
+    is_waterproof = True
+
+    def __init__(self, health: int = 1):
+        super().__init__(health)
 # END Problem 11
 
 
@@ -499,6 +558,7 @@ class Bee(Insect):
 
     name = 'Bee'
     damage = 1
+    is_waterproof = True # Problem 10
 
 
     def sting(self, ant: Ant):
