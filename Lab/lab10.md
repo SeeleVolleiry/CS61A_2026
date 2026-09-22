@@ -186,4 +186,82 @@ Hint:
 
 补全`lab10.scm`
 
-`Tail Calls`
+Write a tail-recursive function concatenate, which takes in s, a list of lists, and concatenates all the elements together into one list.
+
+Hint: Recall the built-in append function
+
+`Tail Calls`：尾递归
+
+A recursive call is a tail call if it is the last thing the function does.
+Example of a Tail Call:
+```scheme
+(define (fact n total)
+  (if (= n 0)
+      total
+      (fact (- n 1) (* total n))))
+```
+As you can see above, the last thing that happens is a call to fact. There is nothing left to do in this frame, so we can close it and move onto the next.
+
+Example of a function without a tail call:
+```scheme
+(define (fact n)
+  (if (= n 0)
+      1
+      (* n (fact (- n 1)))))
+```
+As you can see above, the (fact (- n 1)) call must return and then be multiplied by n. Meaning, we have to keep that frame open until the call has completed and we can multiply.
+
+This is important because Tail-recursive functions use constant space unlike non-Tail-recursive functions which can use linear or more space.
+
+After the recursive call returns, is there any work left to do?
+
+    If yes, then it is not a tail call.
+    If no, then it is a tail call.
+
+解锁问题：
+```scheme
+---------------------------------------------------------------------
+scm> (load-all ".")
+scm> (concatenate (list (list 1 2) (list 5 1)))
+? (1 2 5 1)
+-- OK! --
+---------------------------------------------------------------------
+scm> (load-all ".")
+scm> (concatenate (list (list 1 2) (list)))
+? (1 2)
+-- OK! --
+---------------------------------------------------------------------
+scm> (load-all ".")
+scm> (define (tail-list n so-far)
+....   (if (= n 0)
+....       so-far
+....       (tail-list (- n 1) (cons 1 so-far)))) ; What does scheme return after a `define` statement?
+? tail-list
+-- OK! --
+
+scm> (define big-list (tail-list 100000 '()))
+? big-list
+-- OK! --
+
+scm> (define result (concatenate (list big-list (list 1 2 3 4)))) ; Test for tail recursion
+? result
+-- OK! --
+```
+
+```scheme
+; tail recursion version
+(define (concatenate s)
+  (define (helper l result)
+    (if (null? l)
+        result
+        (helper (cdr l) (append result (car l)))))
+  (helper s '()))
+
+; recursion
+(define (concatenate s) 
+    (if (null? s) 
+        '()
+        (append (car s) (concatenate (cdr s) ))
+    )
+)
+```

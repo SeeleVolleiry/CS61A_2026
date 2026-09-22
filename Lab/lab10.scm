@@ -1,10 +1,15 @@
 (define-macro (repeat n expr)
-  `(repeated-call ,n ___))
+  `(repeated-call ,n (lambda () ,expr )))
 
 ; Call zero-argument procedure f n times and return the final result.
 (define (repeated-call n f)
   (if (= n 1)
-      ___
-      (begin ___ ___)))
+      (f)
+      (begin (f) (repeated-call (- n 1) f))))
 
-(define (concatenate s) 'YOUR-CODE-HERE)
+(define (concatenate s) 
+    (if (null? s) 
+        '()
+        (append (car s) (concatenate (cdr s) ))
+    )
+)
