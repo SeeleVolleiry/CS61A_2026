@@ -1,0 +1,18 @@
+(define (accumulate merger start n term)
+  (if (= n 1)
+    (merger start (term 1))
+    (merger (accumulate merger start (- n 1) term) (term n))
+    )
+  )
+(define (identity x) x)
+(accumulate * 1 5 identity)
+
+(define (accumulate-tail merger start n term)
+    (define (tail-helper result i)
+      (if ( > i n)
+        result
+        (tail-helper (merger result (term i)) (+ i 1))
+      )
+    )
+    (tail-helper start 1)
+  )
