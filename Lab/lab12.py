@@ -214,10 +214,20 @@ class Player:
         self.random_func = random_func
 
     def debate(self, other):
-        "*** YOUR CODE HERE ***"
+        p1, p2 = self.popularity, other.popularity
+        probability = max(0.1, p1/(p1+p2))
+        if self.random_func() < probability:
+            self.popularity += 50
+        else:
+            self.popularity -= 50
+            if self.popularity <0:
+                self.popularity = 0
 
     def speech(self, other):
-        "*** YOUR CODE HERE ***"
+        p1, p2 = self.popularity, other.popularity
+        self.popularity += (p1 // 10)
+        self.votes += (p1 // 10)
+        other.popularity -= (p2 // 10)
 
     def choose(self, other):
         return self.speech
@@ -248,14 +258,29 @@ class Game:
 
     def play(self):
         while not self.game_over():
-            "*** YOUR CODE HERE ***"
+            self.p1.choose(self.p2)(self.p2)
+            self.turn += 1
+            if self.game_over():
+                break
+            self.p2.choose(self.p1)(self.p1)
+            self.turn += 1
         return self.winner()
 
     def game_over(self):
         return max(self.p1.votes, self.p2.votes) >= 50 or self.turn >= 10
 
-    def winner(self):
-        "*** YOUR CODE HERE ***"
+    def winner(self): # 通过测试样例可以看出返回值为Player实例
+        if self.turn >= 10:
+            if self.p1.votes == self.p2.votes:
+                return None
+            elif self.p1.votes > self.p2.votes:
+                return self.p1
+            else:
+                return self.p2
+        elif self.p1.votes >= 50 and self.p2.votes < 50:
+            return self.p1
+        elif self.p1.votes < 50 and self.p2.votes >= 50:
+            return self.p2
 
 
 ### Phase 3: New Players
@@ -278,7 +303,10 @@ class AggressivePlayer(Player):
     True
     """
     def choose(self, other):
-        "*** YOUR CODE HERE ***"
+        if self.popularity <= other.popularity:
+            return self.debate
+        else:
+            return self.speech
 
 class CautiousPlayer(Player):
     """
@@ -295,7 +323,10 @@ class CautiousPlayer(Player):
     True
     """
     def choose(self, other):
-        "*** YOUR CODE HERE ***"
+        if self.popularity == 0:
+            return self.debate
+        else:
+            return self.speech
 
 
 def two_list(vals, counts):

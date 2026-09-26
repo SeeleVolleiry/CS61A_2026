@@ -66,20 +66,41 @@ n阶的楼梯，每次只走1步或者2步。有哪些走法？用有1、2组成
 解题思路：提示让我们用递归思维来思考和解决问题
 
 # OOP：Object-Oriented Programming
+
+Let's implement a game called Election. In this game, two players compete to try and earn the most votes. Both players start with 0 votes and 100 popularity.
+
+The two players alternate turns, and the first player starts. Each turn, the current player chooses an action. There are two types of actions:
+
+    The player can debate, and either gain or lose 50 popularity. If the player has popularity p1 and the other player has popularity p2, then the probability that the player gains 50 popularity is max(0.1, p1 / (p1 + p2)). Note that the max here ensures that the probability is never lower than 0.1.
+    
+    The player can give a speech. If the player has popularity p1 and the other player has popularity p2, then the player gains p1 // 10 votes and popularity and the other player loses p2 // 10 popularity.
+
+The game ends when a player reaches 50 votes, or after a total of 10 turns have been played (each player has taken 5 turns). Whoever has more votes at the end of the game is the winner!
+
 ## Q6: Player
 
+First, let's implement the Player class. `Fill in the debate and speech methods`, that take in another Player other, and implement the correct behavior as detailed above. Here are a few additional things to keep in mind:
 
+    Each player carries a random number generator (the random_func instance attribute), which is a function taking in no arguments that returns a random float between 0 and 1 when called.
+
+    In the debate method, you should call the random_func function to get a random number. The player should gain 50 popularity if the random number is smaller than the probability described above, or lose 50 popularity otherwise.
+    
+    Neither players' popularity should ever become negative. If this happens, set it equal to 0 instead.
 
 
 ## Q7: Game
 
+Now, implement the Game class. Fill in the play method, which should alternate between the two players, starting with p1, and have each player take one turn at a time. The choose method in the Player class returns the method, either debate or speech, that should be called to perform the action.
 
-
+In addition, fill in the winner method, which should return the player with more votes, or None if the players are tied.
 
 ## Q8: New Players (optional)
 
+Let's implement two new classes that inherit from Player, but have more interesting choose methods.
 
+Implement the choose method in the AggressivePlayer class, which returns the debate method if the player's popularity is less than or equal to other's popularity, and speech otherwise.
 
+Implement the choose method in the CautiousPlayer class, which returns the debate method if the player's popularity is 0, and speech otherwise.
 
 # Linked List
 ## Q9: Two List （Linked LIsts）
