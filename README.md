@@ -2,3 +2,5 @@
 Record the course of learning CS61A.
 
 The code of CS61A summer 2026, including fragment of lab, homework, project and some example.
+
+2026.9.28完结
